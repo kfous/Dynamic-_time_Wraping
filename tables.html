@@ -1,0 +1,411 @@
+<html>
+<head>
+	<title>Tables</title>
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<link rel="stylesheet" href="css/tableStyle.css" />
+	<link rel="stylesheet" href="css/tableNormalStyle.css" />
+	<link rel="stylesheet" href="css/tableDTWStyle.css" />
+
+
+</head>
+<body>
+	<div class="container">
+		<center>
+			<h1>Tables</h1>
+			
+			<button type="button" name="load_data" id="load_data" class="btn btn-info">Load Data</button>
+			
+		</center>
+	</div>
+	<br />
+
+<h1>Timestamp table</h1>
+	<table id="result" "></table>
+</br>
+
+<h1>Normalized table</h1>
+<table id="normalized" ></table>
+
+</br>
+<h1>Line Chart</h1>
+<div id="linechart_material" style="width: 900px; height: 500px"></div>
+
+</br>
+<h1>DTW Cost table (without the addition of minimum nearby value)</h1>
+<table id="DTW" ></table>
+
+
+
+<table id="first" class="table table-bordered table-striped"></table>
+<table id="second" class="table table-bordered table-striped"></table>
+<br />
+
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="jquery.min.js"></script>
+<script>
+
+
+//fucntion that starts with page load
+	$(document).ready(function(){
+		$('#load_data').click(function(){//when load data button is clicked
+
+			//Ajax call to obtain the first file timestamp
+			$.ajax({
+				url:"file1.txt",
+				dataType:"text",
+				success:function(data)
+				{
+
+					var time_data = data.split(/\r?\n|\r/);
+					var table_data = '<table class="table table-bordered table-striped">';
+					for(var count = 0; count<time_data.length; count++)
+					{
+						global_counter += count; //global counter that helps on computing the result table, number of rows
+						
+						if(count === 0)
+						{  	
+							table_data += '<th>'+"#"+'</th>'; //create the column names-numbers for timestamps
+							table_data += '<th>'+"0"+'</th>';
+							table_data += '<th>'+"1"+'</th>';
+							table_data += '<th>'+"2"+'</th>';
+							table_data += '<th>'+"3"+'</th>';
+							table_data += '<th>'+"4"+'</th>';
+							table_data += '<th>'+"5"+'</th>';
+
+
+						}
+
+						var cell_data = time_data[count].split(/[,.\s]/); // divide cells with . or , delimiters from file 
+						table_data += '<tr>';
+						table_data += '<td scope="row">'+global_counter+'</td>';        // creation of lines with the global counter
+						for(var cell_count=0; cell_count<cell_data.length; cell_count++)
+						{
+
+							if(count === 0)
+							{
+								table_data += '<td>'+cell_data[cell_count]+'</td>';
+							}
+							else
+							{
+								table_data += '<td>'+cell_data[cell_count]+'</td>';
+							}
+						}
+						table_data += '</tr>';
+					}
+
+					table_data += '</table>';
+					$('#first').html(table_data);    //populate the table to the first table
+				}
+
+			});
+
+			var global_counter = 0 ; // the global counter described initialized after ajax call(asychonous)
+			
+
+			// ajax call to obtain the timestamp from the second file
+			$.ajax({
+				url:"file2.txt", 
+				dataType:"text",
+				success:function(data){
+
+					var time_data = data.split(/\r?\n|\r/);
+					var table_data = '<table class="table table-bordered table-striped">';  // once again creation of a temp table
+					for(var count = 0; count<time_data.length; count++)
+					{
+						global_counter++; // the global counter will raise so the rows as well
+						var cell_data = time_data[count].split(/[,.\s]/);
+						table_data += '<tr>';
+						table_data += '<td scope="row">'+global_counter+'</td>'; //rows to be continued
+						for(var cell_count=0; cell_count<cell_data.length; cell_count++)
+						{
+							if(count === 0)
+							{
+								table_data += '<td>'+cell_data[cell_count]+'</td>';
+							}
+							else
+							{
+								table_data += '<td>'+cell_data[cell_count]+'</td>';
+							}
+						}
+						table_data += '</tr>';
+					}
+					table_data += '</table>';
+
+
+					$('#second').html(table_data);
+
+
+
+					  // loop first table
+					  $('#first tr').each( function() {
+					    // get the number
+					    var counter =0;
+					    var name = $(this).find('td:first').text(),
+					        // search the name in the second table
+					        tbl2row = $("#second td").filter(function() {
+					        	return $(this).text() == name;
+					        }).closest("tr");
+					        
+					    // if the number doesn't exist in the second table
+					    if( tbl2row.length == 0 ) {
+					      // clone the row and add it to the result table
+					      $(this).clone().appendTo('#result');
+					  }
+					    
+					    else {
+					      // clone the row
+					      var clone = $(this).clone();
+
+					      // add the clone to the new table
+					      clone.appendTo('#result');
+					  }
+					});
+					  
+					  // loop the second table
+					  $('#second tr').each( function() {
+					  	var name = $(this).find('td:first').text(),
+					  	resRow = $("#result td").filter(function() {
+					  		return $(this).text() == name;
+					  	}).closest("tr");
+
+					    //  add the row
+					    if( resRow.length ) {
+
+					    	$(this).clone().appendTo('#result');
+					    }
+					});
+
+
+					//****table normalization***
+
+					//copy the result table to another one so it can be normalized
+					var source = document.getElementById('result');
+					var destination = document.getElementById('normalized');
+					var copy = source.cloneNode(true);
+					copy.setAttribute('id', 'normalized');
+					destination.parentNode.replaceChild(copy, destination);
+
+
+					//change the new tables values making it normalized, by iterating
+					var table = document.getElementById("normalized");
+					for (var i = 1, row; row = table.rows[i]; i++) {
+						var max =0;
+						var min = 100;
+					   //iterate through rows
+					   //rows would be accessed using the "row" variable assigned in the for loop
+					   for (var j = 1, col; col = row.cells[j]; j++) {
+						     //iterate through columns
+						     //columns would be accessed using the "col" variable assigned in the for loop
+						     if(col.innerHTML>max){
+						     	max = col.innerHTML;   //calculate min and max
+						     }
+						     if(col.innerHTML<min){
+						     	min = col.innerHTML;
+						     } 
+
+						     if(max-min>0){
+						     	col.innerHTML = (col.innerHTML-min)/(max-min) ; //put the normalized data into the cells
+						     }
+
+
+						 }
+						}
+
+
+
+
+					// LINE CHART
+					google.charts.load('current', {'packages':['line']});
+					google.charts.setOnLoadCallback(drawChart);
+
+					function drawChart() {
+
+						var data = new google.visualization.DataTable();
+					      //Load normalized table
+					      var table = document.getElementById("normalized");
+
+					      //insert columns
+					      data.addColumn('number', 'Time');
+					      data.addColumn('number', ' Fist timestamp');
+					      data.addColumn('number', 'Second timestamp');
+
+					      var i = 1;
+					      var j =1;
+					      data.addRows([
+					      	[0, parseFloat(table.rows[i].cells[j].innerHTML),parseFloat(table.rows[i+1].cells[j].innerHTML)],
+					      	[1,  parseFloat(table.rows[i].cells[j+1].innerHTML), parseFloat(table.rows[i+1].cells[j+1].innerHTML)],
+					      	[2,  parseFloat(table.rows[i].cells[j+2].innerHTML), parseFloat(table.rows[i+1].cells[j+2].innerHTML)],
+					      	[3,  parseFloat(table.rows[i].cells[j+3].innerHTML), parseFloat(table.rows[i+1].cells[j+3].innerHTML)],
+					      	[4,  parseFloat(table.rows[i].cells[j+4].innerHTML), parseFloat(table.rows[i+1].cells[j+4].innerHTML)],
+					      	[5,  parseFloat(table.rows[i].cells[j+5].innerHTML), parseFloat(table.rows[i+1].cells[j+5].innerHTML)],
+
+					      	]);
+
+
+
+
+					      var options = {
+					      	chart: {
+					      		title: 'Timestamp Line chart',
+					      		hAxis: {
+					      			title: 'Time',
+					      			logScale: true
+					      		},
+					      	},
+					      	width: 900,
+					      	height: 500
+					      };
+					      //chart is the value that has the id of the line chart table in html
+					      var chart = new google.charts.Line(document.getElementById('linechart_material'));
+
+					      //draw the  chart created
+					      chart.draw(data, google.charts.Line.convertOptions(options));
+					  }
+
+
+					  //find the  row and column numbers from the result table
+					  var table = document.getElementById("result");
+					  var n = 0;
+					  var m = 0;
+					  
+					 //count columns of result table stored in m
+					 for (var j = 0, col; col = table.rows[0].cells[j]; j++) { //rows stay zero
+					 	m++;
+					 }
+					 //count rows of result table stored in n
+					 for (var i = 1, row; row = table.rows[i];i++) { //columns stay zero
+						n++;
+					 }
+
+
+
+
+
+					//Make an array with values of the first timestamp
+					var myTableArray = [];
+
+					//we obtain the data from  the first table
+					$("#first tr").each(function() {
+						
+						var arrayOfThisRow = [];
+						var tableData = $(this).find('td');
+						if (tableData.length > 0  ) {
+							tableData.each(function() {
+								arrayOfThisRow.push($(this).text()); 
+							});
+							myTableArray.push(arrayOfThisRow);
+						}
+
+					});
+
+					//make array with values of the second timestamp
+					var myTableArray2 = [];
+					//We obtain the data from the second table
+					$("#second tr").each(function() {
+						
+						var arrayOfThisRow = [];
+						var tableData = $(this).find('td');
+						if (tableData.length > 0  ) {
+							tableData.each(function() {
+								arrayOfThisRow.push($(this).text()); 
+							});
+							myTableArray2.push(arrayOfThisRow);
+						}
+
+					});
+
+
+
+										//Creation of the DTW table using the DTW algorithm
+										var table_data = '<table class="table table-bordered table-striped">';
+										for(var i = 0; i<m; i++)
+										{
+											//first row should have the first timestamp stored in array as mentioned before
+											if(i == 0){
+												table_data += '<th>'+"#"+'</th>';
+												
+												for(var k=0; k<m ; k++){
+													
+													table_data += '<th>'+myTableArray[i][k]+'</th>';
+												}
+												
+											}
+
+
+
+
+											table_data += '<tr>';
+											//first column also should have the second timestamp as mentioned before
+											table_data += '<td scope="row">'+myTableArray2[0][i]+'</td>';
+											
+											for(var j=0; j<m; j++)
+											{
+												//if both are zero then value is zero
+												if(i==0 && j==0){
+													table_data += '<td >'+'0'+'</td>';
+												}
+												//fill inf value (e.g. 1000) if the i=0 and j>=1 and vice versa
+												else if(i ==0 && j>=1){
+													table_data+= '<td >'+'1000'+'</td>';
+												}
+												else if( j == 0 && i>=1){
+													table_data+= '<td >'+'1000'+'</td>';
+													
+												}else if(i==1 && j==1){
+													table_data += '<td >'+'0'+'</td>';
+												}
+												else{
+													
+													//calculate the cost by the substraction below
+													var cost = Math.abs(myTableArray[0][j] - myTableArray2[0][i] );
+
+													//here i wanted to calculate the minumum as dtw red box described but i couldnt make it
+													//var c =Math.min(table_data.rows[i-1].cells[j],table_data.rows[i].cells[j-1],table_data.rows[i-1].cells[j-1]);
+
+
+													table_data +='<td >'+ cost  +'</td>' ;
+
+													
+												}
+
+											}
+											table_data += '</tr>';
+										}
+										table_data += '</table>';
+
+										//pass the temp table to the dtw in html
+										$('#DTW').html(table_data);
+
+
+
+									}
+								});
+
+
+
+
+
+
+
+
+
+});
+
+});
+</script>
+
+
+
+
+</body>
+</html>
+
+

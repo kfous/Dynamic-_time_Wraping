@@ -1,0 +1,48 @@
+<html>
+<head>
+	<title>Files</title>
+	<link href="https://fonts.googleapis.com/css?family=Nunito:400,600,700" rel="stylesheet">
+	<link rel="stylesheet" href="css/style.css" />
+
+
+	<center>
+		<h1>Files</h1>
+	</center>
+</head>
+<body>
+	<!-- here with the loading of this div a php file is loaded to upload the file in a spesific folder folder-->
+	<form id="login_div" class="main-div"  enctype="multipart/form-data" action="upload.php" method="POST">
+
+		<input id="fileInput" type="file" name="uploaded_file">
+
+		<button id="log" value="Upload">Upload </button>
+
+	</form>
+
+<script>
+	window.onload = function() {
+
+		var fileInput = document.getElementById('fileInput');
+		
+
+		//If a file is chosen then calculate its rows
+		fileInput.addEventListener('change', function(e) {
+		    var nLines = 0;
+		    for( var i = 0, n = fileInput.length;  i < n;  i++) {
+		        if( fileInput[i] == '\n' ) { // for some reason i couldnt calculate the n lines
+		            nLines++;
+
+		        }
+		    }console.log(nLines);
+		    //if it exceed the 10 rows then alert the user
+		    if(nLines>10){
+		    	
+		    	alert("Sorry file is more than 10 rows");
+		    }
+		});
+}
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+#DTW {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+
+#DTW td, #DTW th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+#DTW  tr:nth-child(even){background-color: #f2f2f2;}
+
+#DTW  tr:hover {background-color: #ddd;}
+
+#DTW  th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #4CAF50;
+    color: white;
+}
+
+#DTW  td[scope="row"] {
+    background-color: #4CAF50;
+}
